@@ -56,7 +56,6 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
   bool _cameraPreviewReady = false;
   bool _isCameraRecording = false;
   bool _isAudioRecording = false;
-  bool _cameraInitialising = false;
   bool _isSaving = false;
   bool _isProcessing = false;
 
@@ -264,7 +263,6 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
 
     // 1. Pre-warm Flutter image cache asynchronously (works on all platforms including web).
     if (mounted) {
-      final ctx = context;
       for (int i = 0; i < story.pageTexts.length; i++) {
         final assetPath = _pageAsset(story, i);
         if (assetPath.isEmpty) continue;
@@ -275,16 +273,18 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
                   cacheManager: DefaultCacheManager(),
                 )
               : AssetImage(assetPath) as ImageProvider;
-          
+
           // Do not await the precacheImage, let it resolve in the background so
           // we do not block starting the recording and timer.
-          precacheImage(
-            provider,
-            ctx,
-            onError: (exception, stackTrace) {
-              debugPrint('Failed to precache image $assetPath: $exception');
-            },
-          );
+          if (mounted) {
+            precacheImage(
+              provider,
+              context,
+              onError: (exception, stackTrace) {
+                debugPrint('Failed to precache image $assetPath: $exception');
+              },
+            );
+          }
         } catch (_) {}
       }
     }
@@ -502,7 +502,6 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
   // ─── camera warm-up ───────────────────────────────────────────────────────
 
   Future<void> _warmUpCamera() async {
-    if (mounted) setState(() => _cameraInitialising = true);
     try {
       if (!kIsWeb) {
         final preCtrl = ref.read(activeCameraControllerProvider);
@@ -511,7 +510,6 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
           ref.read(activeCameraControllerProvider.notifier).state = null;
           if (mounted) {
             setState(() {
-              _cameraInitialising = false;
               _cameraPreviewReady = true;
             });
             _updatePipOverlay();
@@ -543,12 +541,11 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
       }
       _cameraController = ctrl;
       setState(() {
-        _cameraInitialising = false;
         _cameraPreviewReady = true;
       });
       _updatePipOverlay();
     } catch (_) {
-      if (mounted) setState(() => _cameraInitialising = false);
+      // Camera warm-up failed; recording flow will retry on start.
     }
   }
 
@@ -634,12 +631,12 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
       }
     }
 
-    if (mounted) setState(() => _cameraInitialising = true);
     try {
       final cam = await Permission.camera.request();
       final mic = await Permission.microphone.request();
-      if (!cam.isGranted || !mic.isGranted)
+      if (!cam.isGranted || !mic.isGranted) {
         throw Exception('Permission denied');
+      }
       final cameras = await availableCameras();
       if (cameras.isEmpty) throw Exception('No cameras');
       final front = cameras.firstWhere(
@@ -661,7 +658,6 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
         setState(() {
           _isCameraRecording = true;
           _cameraPreviewReady = true;
-          _cameraInitialising = false;
         });
         _updatePipOverlay();
       }
@@ -671,7 +667,6 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
       if (mounted) {
         setState(() {
           _cameraPreviewReady = false;
-          _cameraInitialising = false;
         });
         _updatePipOverlay();
       }
@@ -687,7 +682,7 @@ class _RecordingScreenState extends ConsumerState<RecordingScreen> {
           return;
         }
       }
-      final encoder = kIsWeb ? AudioEncoder.opus : AudioEncoder.aacLc;
+      const encoder = kIsWeb ? AudioEncoder.opus : AudioEncoder.aacLc;
       await _audioRecorder.start(
         RecordConfig(encoder: encoder),
         path: _audioTempPath,

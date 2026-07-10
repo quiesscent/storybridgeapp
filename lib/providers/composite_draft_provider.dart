@@ -156,7 +156,7 @@ class CompositeDraftNotifier extends AsyncNotifier<CompositeDraft?> with Widgets
         mode: mode,
         faceVideoPath: rec.localVideoPath,
         audioTrackPath: rec.localAudioPath,
-        bookVideoPath: rec.localVideoPath != null ? rec.localVideoPath : null,
+        bookVideoPath: rec.localVideoPath,
         title: rec.title,
         dedication: rec.dedication,
         duration: rec.duration,

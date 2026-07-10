@@ -1136,8 +1136,8 @@ class _ShareSheet extends ConsumerStatefulWidget {
 }
 
 class _ShareSheetState extends ConsumerState<_ShareSheet> {
-  bool _uploading = false;
-  double _progress = 0;
+  final bool _uploading = false;
+  final double _progress = 0;
   String? _shareUrl;
   String? _error;
 
