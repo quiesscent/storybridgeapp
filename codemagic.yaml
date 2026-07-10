@@ -17,7 +17,7 @@ workflows:
         #     ANDROID_KEYSTORE_PASSWORD (Secure String)
         #     ANDROID_KEY_ALIAS (Secure String)
         #     ANDROID_KEY_PASSWORD (Secure String)
-        - android_credentials
+        - secrets
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -185,7 +185,7 @@ workflows:
         # Define these groups in your Codemagic application settings:
         # - firebase_credentials:
         #     FIREBASE_TOKEN (Secure String)
-        - firebase_credentials
+        - secrets
       flutter: stable
       xcode: latest
       cocoapods: default
