@@ -99,7 +99,7 @@ workflows:
         #     APP_STORE_CONNECT_KEY_IDENTIFIER (Secure String)
         #     APP_STORE_CONNECT_ISSUER_ID (Secure String)
         #     APP_STORE_CONNECT_PRIVATE_KEY (Secure File / String)
-        - apple_credentials
+        - secrets
       flutter: stable
       xcode: latest
       cocoapods: default
