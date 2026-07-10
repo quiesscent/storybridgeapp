@@ -104,18 +104,14 @@ workflows:
       xcode: latest
       cocoapods: default
       vars:
-        BUNDLE_ID: "com.example.storyApp"
+        # BUNDLE_ID must match the App ID / app record you create in App Store Connect.
+        BUNDLE_ID: "com.strorybridgeapp.strorybridgeapp"
         XCODE_WORKSPACE: "ios/Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
-        APP_STORE_CONNECT_KEY_IDENTIFIER: "T728D9H3BD"
-        APP_STORE_CONNECT_ISSUER_ID: "23e6f2ed-73aa-432a-9504-96b0290c7ac5"
-        APP_STORE_CONNECT_PRIVATE_KEY: |
-          -----BEGIN PRIVATE KEY-----
-          MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQga5kuuolEe9zbpG/+
-          hZkuKv4iTcxy912ksSkgk6HQRLegCgYIKoZIzj0DAQehRANCAASdC4BOFShsHNsc
-          CluIpqU56MywvbAyEuCtmz/hdGzUNZFdo9kPmhYKQq+CruKzlg9ousijHUmyYxT2
-          Z4QNMRo9
-          -----END PRIVATE KEY-----
+        # APP_STORE_CONNECT_KEY_IDENTIFIER, APP_STORE_CONNECT_ISSUER_ID and
+        # APP_STORE_CONNECT_PRIVATE_KEY are NOT set here. Define them as encrypted
+        # variables inside the "apple_credentials" group in the Codemagic dashboard
+        # (Application settings > Environment variables > Groups), never in this file.
     cache:
       cache_paths:
         - $HOME/.pub-cache
@@ -169,6 +165,13 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
 
   # --------------------------------------------------------------------------
   # Web Workflow & Firebase Deployment

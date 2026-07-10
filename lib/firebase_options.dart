@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '414210741701',
     projectId: 'storybridge-e4b5e',
     storageBucket: 'storybridge-e4b5e.firebasestorage.app',
-    iosBundleId: 'com.example.storyApp',
+    iosBundleId: 'com.strorybridgeapp.strorybridgeapp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '414210741701',
     projectId: 'storybridge-e4b5e',
     storageBucket: 'storybridge-e4b5e.firebasestorage.app',
-    iosBundleId: 'com.example.storyApp',
+    iosBundleId: 'com.strorybridgeapp.strorybridgeapp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
