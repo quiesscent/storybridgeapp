@@ -1,0 +1,235 @@
+# Codemagic CI/CD configuration for Flutter (Story App)
+# Documented at: https://docs.codemagic.io/yaml/building/
+
+workflows:
+  # --------------------------------------------------------------------------
+  # Android Workflow
+  # --------------------------------------------------------------------------
+  android-workflow:
+    name: Flutter Android Build
+    max_build_duration: 60
+    instance_type: mac_mini_m1 # Can also use 'linux' for Android/Web to save build minutes
+    environment:
+      groups:
+        # Define these groups in your Codemagic application settings:
+        # - android_credentials:
+        #     ANDROID_KEYSTORE (Secure File or Base64)
+        #     ANDROID_KEYSTORE_PASSWORD (Secure String)
+        #     ANDROID_KEY_ALIAS (Secure String)
+        #     ANDROID_KEY_PASSWORD (Secure String)
+        - android_credentials
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        PACKAGE_NAME: "com.example.story_app"
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/.gradle/caches
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+        - pattern: 'master'
+          include: true
+        - pattern: 'release/*'
+          include: true
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+
+      - name: Prepare keystore
+        script: |
+          # Decodes and configures the keystore for release builds if available
+          if [ -n "$ANDROID_KEYSTORE" ]; then
+            echo "$ANDROID_KEYSTORE" | base64 --decode > /tmp/keystore.jks
+            echo "storeFile=/tmp/keystore.jks" > android/key.properties
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD" >> android/key.properties
+            echo "keyAlias=$ANDROID_KEY_ALIAS" >> android/key.properties
+            echo "keyPassword=$ANDROID_KEY_PASSWORD" >> android/key.properties
+            echo "Keystore successfully prepared."
+          else
+            echo "ANDROID_KEYSTORE not configured. Android build will use default signing (debug)."
+          fi
+
+      - name: Fetch dependencies
+        script: |
+          flutter packages pub get
+
+      - name: Run code generation (build_runner)
+        script: |
+          # Important: Generate Freezed and json_serializable files
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Flutter static analysis
+        script: |
+          flutter analyze
+
+      - name: Run Unit & Widget Tests
+        script: |
+          flutter test
+
+      - name: Build Android App Bundle (Release AAB)
+        script: |
+          flutter build appbundle --release
+
+      - name: Build Android APK (Release APKs split by ABI)
+        script: |
+          flutter build apk --release --split-per-abi
+
+    artifacts:
+      - build/app/outputs/bundle/release/*.aab
+      - build/app/outputs/apk/release/*.apk
+
+  # --------------------------------------------------------------------------
+  # iOS Workflow
+  # --------------------------------------------------------------------------
+  ios-workflow:
+    name: Flutter iOS Build
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        # Define these groups in your Codemagic application settings:
+        # - apple_credentials:
+        #     APP_STORE_CONNECT_KEY_IDENTIFIER (Secure String)
+        #     APP_STORE_CONNECT_ISSUER_ID (Secure String)
+        #     APP_STORE_CONNECT_PRIVATE_KEY (Secure File / String)
+        - apple_credentials
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: "com.example.storyApp"
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+        APP_STORE_CONNECT_KEY_IDENTIFIER: "T728D9H3BD"
+        APP_STORE_CONNECT_ISSUER_ID: "23e6f2ed-73aa-432a-9504-96b0290c7ac5"
+        APP_STORE_CONNECT_PRIVATE_KEY: |
+          -----BEGIN PRIVATE KEY-----
+          MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQga5kuuolEe9zbpG/+
+          hZkuKv4iTcxy912ksSkgk6HQRLegCgYIKoZIzj0DAQehRANCAASdC4BOFShsHNsc
+          CluIpqU56MywvbAyEuCtmz/hdGzUNZFdo9kPmhYKQq+CruKzlg9ousijHUmyYxT2
+          Z4QNMRo9
+          -----END PRIVATE KEY-----
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+        - pattern: 'master'
+          include: true
+        - pattern: 'release/*'
+          include: true
+    scripts:
+      - name: Fetch dependencies
+        script: |
+          flutter packages pub get
+
+      - name: Run code generation (build_runner)
+        script: |
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Set up Apple certificates and profiles
+        script: |
+          keychain initialize
+          if [ -n "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
+            app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --create
+            keychain add-certificates
+            echo "iOS signing credentials set up successfully."
+          else
+            echo "Apple Developer credentials are not set. Building unsigned IPA or relying on Xcode manual configuration."
+          fi
+
+      - name: Install CocoaPods
+        script: |
+          find ios -name "Podfile" -execdir pod install \;
+
+      - name: Build iOS IPA
+        script: |
+          # If credentials are set, build signed IPA. Otherwise build unsigned app.
+          if [ -n "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
+            flutter build ipa --release --export-options-plist=$HOME/export_options.plist
+          else
+            flutter build ios --release --no-codesign
+          fi
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+  # --------------------------------------------------------------------------
+  # Web Workflow & Firebase Deployment
+  # --------------------------------------------------------------------------
+  web-workflow:
+    name: Flutter Web Build & Firebase Deploy
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        # Define these groups in your Codemagic application settings:
+        # - firebase_credentials:
+        #     FIREBASE_TOKEN (Secure String)
+        - firebase_credentials
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        # Replace this with your actual Firebase CI token, or set it in Codemagic environment variables
+        FIREBASE_TOKEN: "YOUR_FIREBASE_TOKEN_HERE"
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+          include: true
+        - pattern: 'master'
+          include: true
+        - pattern: 'release/*'
+          include: true
+    scripts:
+      - name: Fetch dependencies
+        script: |
+          flutter packages pub get
+
+      - name: Run code generation (build_runner)
+        script: |
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: Flutter static analysis
+        script: |
+          flutter analyze
+
+      - name: Run Unit & Widget Tests
+        script: |
+          flutter test
+
+      - name: Build Web release bundle
+        script: |
+          flutter build web --release
+
+      - name: Deploy to Firebase Hosting
+        script: |
+          if [ -n "$FIREBASE_TOKEN" ] && [ "$FIREBASE_TOKEN" != "YOUR_FIREBASE_TOKEN_HERE" ]; then
+            echo "Deploying to Firebase Hosting..."
+            npm install -g firebase-tools
+            # Deploys only hosting targets configured in firebase.json (site: storybridge-e4b5e)
+            firebase deploy --only hosting --token "$FIREBASE_TOKEN"
+          else
+            echo "FIREBASE_TOKEN is not configured or is the default placeholder. Skipping deployment. Build output will still be archived as artifact."
+          fi
+
+    artifacts:
+      - build/web
