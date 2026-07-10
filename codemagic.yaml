@@ -18,7 +18,7 @@ workflows:
         #     ANDROID_KEY_ALIAS (Secure String)
         #     ANDROID_KEY_PASSWORD (Secure String)
         - secrets
-      flutter: stable
+      flutter: 3.41.6
       xcode: latest
       cocoapods: default
       vars:
@@ -100,7 +100,7 @@ workflows:
         #     APP_STORE_CONNECT_ISSUER_ID (Secure String)
         #     APP_STORE_CONNECT_PRIVATE_KEY (Secure File / String)
         - secrets
-      flutter: stable
+      flutter: 3.41.6
       xcode: latest
       cocoapods: default
       vars:
@@ -186,7 +186,7 @@ workflows:
         # - firebase_credentials:
         #     FIREBASE_TOKEN (Secure String)
         - secrets
-      flutter: stable
+      flutter: 3.41.6
       xcode: latest
       cocoapods: default
       vars:
