@@ -143,7 +143,7 @@ workflows:
         script: |
           keychain initialize
           if [ -n "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
-            app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --create
+            app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --type IOS_APP_STORE --create
             keychain add-certificates
             xcode-project use-profiles
             echo "iOS signing credentials set up successfully."
