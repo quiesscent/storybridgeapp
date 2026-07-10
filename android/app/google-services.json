@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "414210741701",
+    "project_id": "storybridge-e4b5e",
+    "storage_bucket": "storybridge-e4b5e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:414210741701:android:e7e7d4714887930ac1e7ac",
+        "android_client_info": {
+          "package_name": "com.example.story_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCxkBvtqlyauQ_rsdcMmXFdGYDGH-FFtc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

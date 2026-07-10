@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "story_app (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome"
+    },
+    {
+      "name": "story_app (Linux)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "linux"
+    }
+  ]
+}
