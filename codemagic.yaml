@@ -61,8 +61,8 @@ workflows:
           keychain initialize
           if [ -n "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
             # Fetch both development and distribution certificates/profiles to satisfy all Xcode targets
-            app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --type IOS_APP_DEVELOPMENT --create
-            app-store-connect fetch-signing-files "$BUNDLE_ID" --project-type ios --type IOS_APP_STORE --create
+            app-store-connect fetch-signing-files "$BUNDLE_ID" --platform IOS --type IOS_APP_DEVELOPMENT --create || exit 1
+            app-store-connect fetch-signing-files "$BUNDLE_ID" --platform IOS --type IOS_APP_STORE --create || exit 1
             keychain add-certificates
             xcode-project use-profiles --warn-only
             echo "iOS signing credentials set up successfully."
