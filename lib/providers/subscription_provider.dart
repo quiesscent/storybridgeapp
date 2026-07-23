@@ -16,7 +16,7 @@ import 'auth_provider.dart';
 final isAdminStreamProvider = StreamProvider<bool>((ref) {
   final user = ref.watch(firebaseUserProvider).valueOrNull;
   if (user == null) return Stream.value(false);
-  if (user.email == 'admin@storybridge.co.uk') return Stream.value(true);
+  if (user.email == 'admin@storybridge.co.uk' || user.email == 'support@storybridgeapp.co.uk') return Stream.value(true);
   
   return FirebaseFirestore.instance
       .collection('admins')
